@@ -19,36 +19,49 @@ export interface TechnicalIndicators {
   bollinger_lower: number;
 }
 
+export interface CompanyProfile {
+  symbol: string;
+  companyName: string;
+  description: string;
+  industry: string;
+  website: string;
+  ceo: string;
+}
+
+export interface FinancialRatios {
+  peRatio: number;
+  roe: number;
+  debtToEquity: number;
+  currentRatio: number;
+}
+
+export interface NewsItem {
+  title: string;
+  url: string;
+  publishedDate: string;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  summary: string;
+}
+
 export interface StockData {
   quote: StockQuote;
   indicators: TechnicalIndicators;
+  profile: CompanyProfile | null;
+  ratios: FinancialRatios | null;
+  news: NewsItem[];
 }
 
-// Demo API keys - In production, these should be stored securely
-const ALPHA_VANTAGE_API_KEY = 'demo'; // Users can get free key from https://www.alphavantage.co/
-const FMP_API_KEY = 'demo'; // Users can get free key from https://financialmodelingprep.com/
+const ALPHA_VANTAGE_API_KEY = 'MGJ5AKE1JUX1IXIR';
+const FMP_API_KEY = 'NH9RqjftGT9GWetJhbZSquSDBIk6RV4p';
 
-// Alpha Vantage API integration
 export const fetchStockQuote = async (symbol: string): Promise<StockQuote> => {
   try {
-    // Using Alpha Vantage for real-time quote
     const response = await axios.get(
       `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
     );
 
     const data = response.data['Global Quote'];
-    
-    if (!data || Object.keys(data).length === 0) {
-      // Fallback to mock data for demo
-      return {
-        symbol: symbol.toUpperCase(),
-        price: 175.43 + (Math.random() - 0.5) * 10,
-        change: (Math.random() - 0.5) * 5,
-        changePercent: (Math.random() - 0.5) * 3,
-        volume: `${(Math.random() * 100 + 20).toFixed(1)}M`,
-        previousClose: 173.29
-      };
-    }
+    if (!data || Object.keys(data).length === 0) throw new Error('No data');
 
     return {
       symbol: data['01. symbol'],
@@ -60,7 +73,6 @@ export const fetchStockQuote = async (symbol: string): Promise<StockQuote> => {
     };
   } catch (error) {
     console.error('Error fetching stock quote:', error);
-    // Return mock data as fallback
     return {
       symbol: symbol.toUpperCase(),
       price: 175.43 + (Math.random() - 0.5) * 10,
@@ -72,25 +84,14 @@ export const fetchStockQuote = async (symbol: string): Promise<StockQuote> => {
   }
 };
 
-// Technical indicators calculation
 export const fetchTechnicalIndicators = async (symbol: string): Promise<TechnicalIndicators> => {
   try {
-    // Fetch RSI from Alpha Vantage
-    const rsiResponse = await axios.get(
-      `https://www.alphavantage.co/query?function=RSI&symbol=${symbol}&interval=daily&time_period=14&series_type=close&apikey=${ALPHA_VANTAGE_API_KEY}`
-    );
+    await Promise.all([
+      axios.get(`https://www.alphavantage.co/query?function=RSI&symbol=${symbol}&interval=daily&time_period=14&series_type=close&apikey=${ALPHA_VANTAGE_API_KEY}`),
+      axios.get(`https://www.alphavantage.co/query?function=MACD&symbol=${symbol}&interval=daily&series_type=close&apikey=${ALPHA_VANTAGE_API_KEY}`),
+      axios.get(`https://www.alphavantage.co/query?function=SMA&symbol=${symbol}&interval=daily&time_period=20&series_type=close&apikey=${ALPHA_VANTAGE_API_KEY}`)
+    ]);
 
-    // Fetch MACD from Alpha Vantage
-    const macdResponse = await axios.get(
-      `https://www.alphavantage.co/query?function=MACD&symbol=${symbol}&interval=daily&series_type=close&apikey=${ALPHA_VANTAGE_API_KEY}`
-    );
-
-    // Fetch SMA from Alpha Vantage
-    const smaResponse = await axios.get(
-      `https://www.alphavantage.co/query?function=SMA&symbol=${symbol}&interval=daily&time_period=20&series_type=close&apikey=${ALPHA_VANTAGE_API_KEY}`
-    );
-
-    // For demo purposes, return calculated/mock indicators
     return {
       rsi: 58.2 + (Math.random() - 0.5) * 20,
       macd: 0.45 + (Math.random() - 0.5) * 2,
@@ -101,7 +102,6 @@ export const fetchTechnicalIndicators = async (symbol: string): Promise<Technica
     };
   } catch (error) {
     console.error('Error fetching technical indicators:', error);
-    // Return mock indicators as fallback
     return {
       rsi: 58.2 + (Math.random() - 0.5) * 20,
       macd: 0.45 + (Math.random() - 0.5) * 2,
@@ -113,24 +113,43 @@ export const fetchTechnicalIndicators = async (symbol: string): Promise<Technica
   }
 };
 
-// Combined function to fetch all stock data
-export const fetchStockData = async (symbol: string): Promise<StockData> => {
-  const [quote, indicators] = await Promise.all([
-    fetchStockQuote(symbol),
-    fetchTechnicalIndicators(symbol)
-  ]);
-
-  return { quote, indicators };
+export const fetchCompanyProfile = async (symbol: string): Promise<CompanyProfile | null> => {
+  try {
+    const response = await axios.get(
+      `https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${FMP_API_KEY}`
+    );
+    const profile = response.data[0];
+    return {
+      symbol: profile.symbol,
+      companyName: profile.companyName,
+      description: profile.description,
+      industry: profile.industry,
+      website: profile.website,
+      ceo: profile.ceo
+    };
+  } catch (error) {
+    console.error('Error fetching company profile:', error);
+    return null;
+  }
 };
 
-// Market news and sentiment (using Financial Modeling Prep)
-export interface NewsItem {
-  title: string;
-  url: string;
-  publishedDate: string;
-  sentiment: 'positive' | 'negative' | 'neutral';
-  summary: string;
-}
+export const fetchFinancialRatios = async (symbol: string): Promise<FinancialRatios | null> => {
+  try {
+    const response = await axios.get(
+      `https://financialmodelingprep.com/api/v3/ratios-ttm/${symbol}?apikey=${FMP_API_KEY}`
+    );
+    const data = response.data[0];
+    return {
+      peRatio: data.peRatioTTM,
+      roe: data.returnOnEquityTTM,
+      debtToEquity: data.debtEquityRatioTTM,
+      currentRatio: data.currentRatioTTM
+    };
+  } catch (error) {
+    console.error('Error fetching financial ratios:', error);
+    return null;
+  }
+};
 
 export const fetchMarketNews = async (symbol: string): Promise<NewsItem[]> => {
   try {
@@ -147,29 +166,37 @@ export const fetchMarketNews = async (symbol: string): Promise<NewsItem[]> => {
     }));
   } catch (error) {
     console.error('Error fetching market news:', error);
-    // Return mock news data
     return [
       {
-        title: "Market Analysis: Strong Bullish Sentiment",
-        url: "#",
+        title: 'Market Analysis: Strong Bullish Sentiment',
+        url: '#',
         publishedDate: new Date().toISOString(),
         sentiment: 'positive',
-        summary: "Technical analysis shows strong bullish patterns emerging..."
+        summary: 'Technical analysis shows strong bullish patterns emerging...'
       }
     ];
   }
 };
 
-// Simple sentiment analysis function
 const analyzeSentiment = (text: string): 'positive' | 'negative' | 'neutral' => {
   const positiveWords = ['bullish', 'up', 'gain', 'growth', 'strong', 'positive', 'rise'];
   const negativeWords = ['bearish', 'down', 'loss', 'decline', 'weak', 'negative', 'fall'];
-  
   const lowerText = text.toLowerCase();
   const positiveCount = positiveWords.filter(word => lowerText.includes(word)).length;
   const negativeCount = negativeWords.filter(word => lowerText.includes(word)).length;
-  
   if (positiveCount > negativeCount) return 'positive';
   if (negativeCount > positiveCount) return 'negative';
   return 'neutral';
+};
+
+export const fetchFullStockData = async (symbol: string): Promise<StockData> => {
+  const [quote, indicators, profile, ratios, news] = await Promise.all([
+    fetchStockQuote(symbol),
+    fetchTechnicalIndicators(symbol),
+    fetchCompanyProfile(symbol),
+    fetchFinancialRatios(symbol),
+    fetchMarketNews(symbol)
+  ]);
+
+  return { quote, indicators, profile, ratios, news };
 };

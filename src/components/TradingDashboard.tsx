@@ -9,7 +9,7 @@ import { MarketData } from './MarketData';
 import { TradingAdvice } from './TradingAdvice';
 import { Header } from './Header';
 import { useSymbolExtraction } from '@/hooks/useSymbolExtraction';
-import { fetchStockData } from '@/services/stockApi';
+import { fetchFullStockData as fetchStockData } from '@/services/stockApi';
 import { analyzePatterns, generateTradingRecommendation } from '@/services/patternAnalysis';
 import { useToast } from '@/hooks/use-toast';
 
