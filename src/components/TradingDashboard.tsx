@@ -1,45 +1,92 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { ImageUploadZone } from './ImageUploadZone';
 import { PatternAnalysis } from './PatternAnalysis';
 import { MarketData } from './MarketData';
 import { TradingAdvice } from './TradingAdvice';
 import { Header } from './Header';
+import { useSymbolExtraction } from '@/hooks/useSymbolExtraction';
+import { fetchStockData } from '@/services/stockApi';
+import { analyzePatterns, generateTradingRecommendation } from '@/services/patternAnalysis';
+import { useToast } from '@/hooks/use-toast';
 
 export const TradingDashboard = () => {
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [manualSymbol, setManualSymbol] = useState('');
+  
+  const { extractedSymbol, extractSymbolFromFile, setSymbol } = useSymbolExtraction();
+  const { toast } = useToast();
+
+  const performAnalysis = async (symbol: string) => {
+    try {
+      setIsAnalyzing(true);
+      
+      // Fetch real stock data
+      const stockData = await fetchStockData(symbol);
+      
+      // Analyze patterns based on real data
+      const detectedPatterns = analyzePatterns(stockData);
+      
+      // Generate trading recommendation
+      const recommendation = generateTradingRecommendation(stockData, detectedPatterns);
+      
+      setAnalysisResults({
+        detectedPatterns,
+        marketData: {
+          symbol: stockData.quote.symbol,
+          price: stockData.quote.price,
+          change: stockData.quote.change,
+          volume: stockData.quote.volume,
+          rsi: stockData.indicators.rsi,
+          macd: stockData.indicators.macd
+        },
+        recommendation
+      });
+      
+      toast({
+        title: "Analysis Complete",
+        description: `Successfully analyzed ${symbol} with ${detectedPatterns.length} patterns detected.`,
+      });
+      
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Unable to fetch market data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleImageUpload = async (file: File) => {
     setUploadedImage(file);
-    setIsAnalyzing(true);
     
-    // Simulate analysis process
-    setTimeout(() => {
-      setAnalysisResults({
-        detectedPatterns: [
-          { name: "Bullish Engulfing", confidence: 0.89, type: "bullish" },
-          { name: "Hammer", confidence: 0.76, type: "bullish" }
-        ],
-        marketData: {
-          symbol: "AAPL",
-          price: 175.43,
-          change: +2.14,
-          volume: "52.3M",
-          rsi: 58.2,
-          macd: 0.45
-        },
-        recommendation: {
-          action: "BUY",
-          confidence: "HIGH",
-          reasoning: "Strong bullish engulfing pattern with high volume confirmation",
-          stopLoss: 168.50,
-          targetPrice: 185.00
-        }
+    // Extract symbol from filename
+    const symbol = extractSymbolFromFile(file);
+    
+    // Perform real analysis
+    await performAnalysis(symbol);
+  };
+
+  const handleManualAnalysis = async () => {
+    if (!manualSymbol.trim()) {
+      toast({
+        title: "Symbol Required",
+        description: "Please enter a stock symbol to analyze.",
+        variant: "destructive",
       });
-      setIsAnalyzing(false);
-    }, 3000);
+      return;
+    }
+    
+    setSymbol(manualSymbol);
+    await performAnalysis(manualSymbol.toUpperCase());
   };
 
   return (
@@ -58,6 +105,39 @@ export const TradingDashboard = () => {
               uploadedImage={uploadedImage}
               isAnalyzing={isAnalyzing}
             />
+            
+            {/* Manual Symbol Input */}
+            <div className="mt-6 pt-6 border-t border-border">
+              <Label htmlFor="symbol" className="text-sm font-medium text-foreground">
+                Or enter stock symbol manually:
+              </Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  id="symbol"
+                  placeholder="e.g., AAPL, TSLA, MSFT"
+                  value={manualSymbol}
+                  onChange={(e) => setManualSymbol(e.target.value)}
+                  className="flex-1"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleManualAnalysis();
+                    }
+                  }}
+                />
+                <Button 
+                  onClick={handleManualAnalysis}
+                  disabled={isAnalyzing}
+                  className="px-6"
+                >
+                  Analyze
+                </Button>
+              </div>
+              {extractedSymbol && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Current symbol: {extractedSymbol}
+                </p>
+              )}
+            </div>
           </Card>
 
           {/* Market Data Section */}
