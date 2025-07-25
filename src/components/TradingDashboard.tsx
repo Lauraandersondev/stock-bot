@@ -11,6 +11,7 @@ import { Header } from './Header';
 import { useSymbolExtraction } from '@/hooks/useSymbolExtraction';
 import { fetchFullStockData as fetchStockData } from '@/services/stockApi';
 import { analyzePatterns, generateTradingRecommendation } from '@/services/patternAnalysis';
+import { analyzeChartImage, preloadModels } from '@/services/computerVision';
 import { useToast } from '@/hooks/use-toast';
 
 export const TradingDashboard = () => {
@@ -18,25 +19,32 @@ export const TradingDashboard = () => {
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [manualSymbol, setManualSymbol] = useState('');
+  const [cvPatterns, setCvPatterns] = useState<any[]>([]);
   
   const { extractedSymbol, extractSymbolFromFile, setSymbol } = useSymbolExtraction();
   const { toast } = useToast();
 
-  const performAnalysis = async (symbol: string) => {
+  // Preload CV models on component mount
+  useState(() => {
+    preloadModels();
+  });
+
+  const performAnalysis = async (symbol: string, imagePatterns?: any[]) => {
     try {
       setIsAnalyzing(true);
       
       // Fetch real stock data
       const stockData = await fetchStockData(symbol);
       
-      // Analyze patterns based on real data
-      const detectedPatterns = analyzePatterns(stockData);
+      // Analyze patterns based on real data and combine with CV patterns
+      const dataPatterns = analyzePatterns(stockData);
+      const allPatterns = imagePatterns ? [...imagePatterns, ...dataPatterns] : dataPatterns;
       
       // Generate trading recommendation
-      const recommendation = generateTradingRecommendation(stockData, detectedPatterns);
+      const recommendation = generateTradingRecommendation(stockData, allPatterns);
       
       setAnalysisResults({
-        detectedPatterns,
+        detectedPatterns: allPatterns,
         marketData: {
           symbol: stockData.quote.symbol,
           price: stockData.quote.price,
@@ -50,7 +58,7 @@ export const TradingDashboard = () => {
       
       toast({
         title: "Analysis Complete",
-        description: `Successfully analyzed ${symbol} with ${detectedPatterns.length} patterns detected.`,
+        description: `Successfully analyzed ${symbol} with ${allPatterns.length} patterns detected.`,
       });
       
     } catch (error) {
@@ -68,11 +76,33 @@ export const TradingDashboard = () => {
   const handleImageUpload = async (file: File) => {
     setUploadedImage(file);
     
-    // Extract symbol from filename
-    const symbol = extractSymbolFromFile(file);
-    
-    // Perform real analysis
-    await performAnalysis(symbol);
+    try {
+      setIsAnalyzing(true);
+      
+      // Step 1: Analyze image with computer vision
+      toast({
+        title: "Analyzing Image",
+        description: "Using computer vision to detect candlestick patterns...",
+      });
+      
+      const detectedPatterns = await analyzeChartImage(file);
+      setCvPatterns(detectedPatterns);
+      
+      // Step 2: Extract symbol and get market data
+      const symbol = extractSymbolFromFile(file);
+      
+      // Step 3: Perform complete analysis
+      await performAnalysis(symbol, detectedPatterns);
+      
+    } catch (error) {
+      console.error('Image analysis error:', error);
+      toast({
+        title: "Image Analysis Failed",
+        description: "Could not analyze the chart image. Please try again.",
+        variant: "destructive",
+      });
+      setIsAnalyzing(false);
+    }
   };
 
   const handleManualAnalysis = async () => {
