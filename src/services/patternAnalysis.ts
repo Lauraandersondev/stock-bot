@@ -1,4 +1,5 @@
 import { StockData } from './stockApi';
+import { ragService } from './ragService';
 
 export interface DetectedPattern {
   name: string;
@@ -102,60 +103,84 @@ export const analyzePatterns = (stockData: StockData): DetectedPattern[] => {
 };
 
 // Generate trading recommendation based on patterns and market data
-export const generateTradingRecommendation = (
+export const generateTradingRecommendation = async (
   stockData: StockData, 
   patterns: DetectedPattern[]
-): TradingRecommendation => {
+): Promise<TradingRecommendation> => {
   const { quote, indicators } = stockData;
   
-  // Calculate overall sentiment score
-  const bullishPatterns = patterns.filter(p => p.type === 'bullish');
-  const bearishPatterns = patterns.filter(p => p.type === 'bearish');
-  
-  const bullishScore = bullishPatterns.reduce((sum, p) => sum + p.confidence, 0);
-  const bearishScore = bearishPatterns.reduce((sum, p) => sum + p.confidence, 0);
-  
-  let action: 'BUY' | 'SELL' | 'HOLD';
-  let confidence: 'HIGH' | 'MEDIUM' | 'LOW';
-  let reasoning: string;
-  
-  const netScore = bullishScore - bearishScore;
-  
-  if (netScore > 0.5) {
-    action = 'BUY';
-    confidence = netScore > 1.2 ? 'HIGH' : 'MEDIUM';
-    reasoning = `Strong bullish signals detected. ${bullishPatterns.map(p => p.name).join(', ')}. RSI: ${indicators.rsi.toFixed(1)}, MACD: ${indicators.macd.toFixed(3)}`;
-  } else if (netScore < -0.5) {
-    action = 'SELL';
-    confidence = netScore < -1.2 ? 'HIGH' : 'MEDIUM';
-    reasoning = `Bearish signals identified. ${bearishPatterns.map(p => p.name).join(', ')}. Consider taking profits or shorting.`;
-  } else {
-    action = 'HOLD';
-    confidence = 'LOW';
-    reasoning = 'Mixed signals detected. Market conditions are unclear, recommend waiting for clearer direction.';
-  }
-
-  // Calculate stop loss and target based on volatility and support/resistance
-  const volatility = Math.abs(quote.change) / quote.previousClose;
-  const stopLossPercent = Math.max(0.02, volatility * 1.5); // At least 2% stop loss
-  const targetPercent = stopLossPercent * 2.5; // 2.5:1 risk-reward ratio
-  
-  const stopLoss = action === 'BUY' 
-    ? quote.price * (1 - stopLossPercent)
-    : quote.price * (1 + stopLossPercent);
+  try {
+    // Get contextual advice from RAG system
+    const patternNames = patterns.map(p => p.name).join(' ');
+    const ragAdvice = await ragService.generateContextualAdvice(
+      patterns, 
+      stockData, 
+      `${patternNames} trading strategy analysis`
+    );
     
-  const targetPrice = action === 'BUY'
-    ? quote.price * (1 + targetPercent) 
-    : quote.price * (1 - targetPercent);
+    // Calculate overall sentiment score
+    const bullishPatterns = patterns.filter(p => p.type === 'bullish');
+    const bearishPatterns = patterns.filter(p => p.type === 'bearish');
+    
+    const bullishScore = bullishPatterns.reduce((sum, p) => sum + p.confidence, 0);
+    const bearishScore = bearishPatterns.reduce((sum, p) => sum + p.confidence, 0);
+    
+    let action: 'BUY' | 'SELL' | 'HOLD';
+    let confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+    
+    const netScore = bullishScore - bearishScore;
+    
+    if (netScore > 0.5) {
+      action = 'BUY';
+      confidence = netScore > 1.2 ? 'HIGH' : 'MEDIUM';
+    } else if (netScore < -0.5) {
+      action = 'SELL';
+      confidence = netScore < -1.2 ? 'HIGH' : 'MEDIUM';
+    } else {
+      action = 'HOLD';
+      confidence = 'LOW';
+    }
 
-  const riskReward = Math.abs(targetPrice - quote.price) / Math.abs(quote.price - stopLoss);
+    // Calculate stop loss and target based on volatility and support/resistance
+    const volatility = Math.abs(quote.change) / quote.previousClose;
+    const stopLossPercent = Math.max(0.02, volatility * 1.5); // At least 2% stop loss
+    const targetPercent = stopLossPercent * 2.5; // 2.5:1 risk-reward ratio
+    
+    const stopLoss = action === 'BUY' 
+      ? quote.price * (1 - stopLossPercent)
+      : quote.price * (1 + stopLossPercent);
+      
+    const targetPrice = action === 'BUY'
+      ? quote.price * (1 + targetPercent) 
+      : quote.price * (1 - targetPercent);
 
-  return {
-    action,
-    confidence,
-    reasoning,
-    stopLoss,
-    targetPrice,
-    riskReward
-  };
+    const riskReward = Math.abs(targetPrice - quote.price) / Math.abs(quote.price - stopLoss);
+
+    return {
+      action,
+      confidence,
+      reasoning: ragAdvice || `Analysis based on ${patterns.length} detected patterns. RSI: ${indicators.rsi.toFixed(1)}, MACD: ${indicators.macd.toFixed(3)}`,
+      stopLoss,
+      targetPrice,
+      riskReward
+    };
+  } catch (error) {
+    console.error('Error generating RAG-enhanced recommendation:', error);
+    
+    // Fallback to simple recommendation
+    const bullishPatterns = patterns.filter(p => p.type === 'bullish');
+    const bearishPatterns = patterns.filter(p => p.type === 'bearish');
+    const bullishScore = bullishPatterns.reduce((sum, p) => sum + p.confidence, 0);
+    const bearishScore = bearishPatterns.reduce((sum, p) => sum + p.confidence, 0);
+    const netScore = bullishScore - bearishScore;
+    
+    return {
+      action: netScore > 0.5 ? 'BUY' : netScore < -0.5 ? 'SELL' : 'HOLD',
+      confidence: 'MEDIUM',
+      reasoning: `Technical analysis shows ${patterns.length} patterns detected. Consider market conditions carefully.`,
+      stopLoss: quote.price * 0.95,
+      targetPrice: quote.price * 1.05,
+      riskReward: 2.0
+    };
+  }
 };

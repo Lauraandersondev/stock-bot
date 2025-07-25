@@ -7,6 +7,7 @@ import { ImageUploadZone } from './ImageUploadZone';
 import { PatternAnalysis } from './PatternAnalysis';
 import { MarketData } from './MarketData';
 import { TradingAdvice } from './TradingAdvice';
+import { KnowledgeSearch } from './KnowledgeSearch';
 import { Header } from './Header';
 import { useSymbolExtraction } from '@/hooks/useSymbolExtraction';
 import { fetchFullStockData as fetchStockData } from '@/services/stockApi';
@@ -191,6 +192,11 @@ export const TradingDashboard = () => {
             />
           </Card>
         </div>
+
+        {/* Knowledge Base Search Section */}
+        <Card className="mt-6 p-6">
+          <KnowledgeSearch />
+        </Card>
         
         {/* Disclaimer */}
         <Card className="mt-8 p-4 bg-warning/10 border-warning">
