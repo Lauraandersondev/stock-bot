@@ -2,12 +2,79 @@ export interface TradingDocument {
   id: string;
   title: string;
   content: string;
-  category: 'pattern' | 'strategy' | 'indicator' | 'risk_management' | 'psychology';
+  category: 'pattern' | 'strategy' | 'indicator' | 'risk_management' | 'psychology' | 'options';
   tags: string[];
   source?: string;
 }
 
 export const TRADING_KNOWLEDGE_BASE: TradingDocument[] = [
+  // Options Trading Fundamentals
+  {
+    id: 'call_options_basics',
+    title: 'Call Options Fundamentals',
+    content: 'A call option gives the holder the right, but not obligation, to buy an underlying asset at a specified strike price before expiration. Call options are bullish instruments - you buy calls when expecting the underlying price to rise above the strike price. The breakeven point is strike price plus premium paid. Maximum loss is limited to the premium, while profit potential is theoretically unlimited. Call options increase in value when the underlying stock price rises, time to expiration increases, or implied volatility increases.',
+    category: 'options',
+    tags: ['call-options', 'bullish', 'options-basics', 'derivatives', 'unlimited-profit'],
+    source: 'Options as a Strategic Investment'
+  },
+  {
+    id: 'put_options_basics', 
+    title: 'Put Options Fundamentals',
+    content: 'A put option gives the holder the right, but not obligation, to sell an underlying asset at a specified strike price before expiration. Put options are bearish instruments - you buy puts when expecting the underlying price to fall below the strike price. The breakeven point is strike price minus premium paid. Maximum loss is limited to the premium, while maximum profit is strike price minus premium (if stock goes to zero). Put options increase in value when the underlying stock price falls, time to expiration increases, or implied volatility increases.',
+    category: 'options',
+    tags: ['put-options', 'bearish', 'options-basics', 'derivatives', 'hedging'],
+    source: 'Options as a Strategic Investment'
+  },
+  {
+    id: 'options_time_decay',
+    title: 'Options Time Decay (Theta)',
+    content: 'Time decay, measured by theta, represents how much an option loses value as time passes. Options are wasting assets - they lose value as expiration approaches, even if the underlying stock price remains unchanged. Time decay accelerates in the final weeks before expiration, especially for at-the-money options. This is why timing is crucial in options trading - being right about direction but wrong about timing can still result in losses. Theta is typically negative for long options positions.',
+    category: 'options',
+    tags: ['theta', 'time-decay', 'options-greeks', 'options-risk', 'expiration'],
+    source: 'Options as a Strategic Investment'
+  },
+  {
+    id: 'options_implied_volatility',
+    title: 'Implied Volatility in Options',
+    content: 'Implied volatility (IV) represents the market\'s expectation of future price movement and is a key component of options pricing. High IV increases option premiums, while low IV decreases them. IV typically spikes during earnings announcements, major events, or market uncertainty. Buying options when IV is high can be unprofitable even if you\'re correct about price direction due to volatility crush. Always consider IV rank and percentile - buy options when IV is low and sell when IV is high.',
+    category: 'options',
+    tags: ['implied-volatility', 'options-pricing', 'vega', 'volatility-crush', 'iv-rank'],
+    source: 'Options as a Strategic Investment'
+  },
+  {
+    id: 'covered_calls_strategy',
+    title: 'Covered Call Strategy',
+    content: 'A covered call involves owning 100 shares of stock and selling a call option against those shares. This generates income from the premium received but caps upside potential at the strike price. It\'s ideal for neutral to slightly bullish outlooks on stocks you already own. The strategy works best in sideways or slowly rising markets with low volatility. Risk is the stock\'s decline minus premium received. Best practiced on stocks with high option premiums and low expected volatility.',
+    category: 'options',
+    tags: ['covered-calls', 'income-strategy', 'conservative-options', 'premium-collection', 'capped-upside'],
+    source: 'Options as a Strategic Investment'
+  },
+  {
+    id: 'protective_puts_strategy',
+    title: 'Protective Put Strategy',
+    content: 'A protective put involves buying put options to hedge long stock positions. It acts like insurance - if the stock falls, the put gains value to offset losses. The cost is the put premium, which acts like an insurance premium. This strategy maintains unlimited upside exposure while limiting downside risk to the strike price minus premium paid. It\'s particularly valuable during uncertain market conditions, earnings announcements, or when holding concentrated positions.',
+    category: 'options',
+    tags: ['protective-puts', 'hedging', 'risk-management', 'portfolio-protection', 'insurance'],
+    source: 'Options as a Strategic Investment'
+  },
+  {
+    id: 'options_delta_gamma',
+    title: 'Options Delta and Gamma',
+    content: 'Delta measures how much an option\'s price changes for each $1 move in the underlying stock. Call deltas range from 0 to 1, put deltas from -1 to 0. At-the-money options have deltas around 0.5. Gamma measures the rate of change of delta - it\'s highest for at-the-money options near expiration. High gamma means delta changes rapidly, creating both opportunity and risk. Understanding delta helps with position sizing and hedging, while gamma awareness is crucial for risk management.',
+    category: 'options',
+    tags: ['delta', 'gamma', 'options-greeks', 'sensitivity', 'hedging-ratio'],
+    source: 'Options as a Strategic Investment'
+  },
+  {
+    id: 'options_straddle_strangle',
+    title: 'Straddle and Strangle Strategies',
+    content: 'A straddle involves buying a call and put with the same strike price and expiration, profiting from large moves in either direction. A strangle uses different strike prices (call higher, put lower), requiring larger moves but costing less. Both strategies profit from increased volatility and benefit from events like earnings. Maximum loss occurs if the stock closes between the strike prices at expiration. These strategies are ideal when expecting big moves but uncertain about direction.',
+    category: 'options',
+    tags: ['straddle', 'strangle', 'volatility-play', 'earnings-strategy', 'direction-neutral'],
+    source: 'Options as a Strategic Investment'
+  },
+
+  // Candlestick Patterns
   {
     id: 'hammer_pattern',
     title: 'Hammer Candlestick Pattern',
@@ -104,5 +171,6 @@ export const KNOWLEDGE_CATEGORIES = {
   strategy: 'Trading Strategies', 
   indicator: 'Technical Indicators',
   risk_management: 'Risk Management',
-  psychology: 'Trading Psychology'
+  psychology: 'Trading Psychology',
+  options: 'Options Trading'
 } as const;
