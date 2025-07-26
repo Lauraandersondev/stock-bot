@@ -97,7 +97,7 @@ export const TradingAdvice = ({ recommendation, isAnalyzing }: TradingAdviceProp
                 <span className="text-sm font-medium text-muted-foreground">Stop Loss</span>
               </div>
               <span className="text-lg font-semibold text-foreground">
-                ${recommendation.stopLoss.toFixed(2)}
+                ${recommendation.stopLoss?.toFixed(2) || 'N/A'}
               </span>
             </Card>
 
@@ -107,7 +107,7 @@ export const TradingAdvice = ({ recommendation, isAnalyzing }: TradingAdviceProp
                 <span className="text-sm font-medium text-muted-foreground">Target Price</span>
               </div>
               <span className="text-lg font-semibold text-foreground">
-                ${recommendation.targetPrice.toFixed(2)}
+                ${recommendation.targetPrice?.toFixed(2) || 'N/A'}
               </span>
             </Card>
           </div>
@@ -117,7 +117,10 @@ export const TradingAdvice = ({ recommendation, isAnalyzing }: TradingAdviceProp
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-muted-foreground">Risk/Reward Ratio</span>
               <span className="text-sm font-semibold text-success">
-                1:{((recommendation.targetPrice - 175.43) / (175.43 - recommendation.stopLoss)).toFixed(1)}
+                {recommendation.targetPrice && recommendation.stopLoss ? 
+                  `1:${((recommendation.targetPrice - 175.43) / (175.43 - recommendation.stopLoss)).toFixed(1)}` :
+                  'N/A'
+                }
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
