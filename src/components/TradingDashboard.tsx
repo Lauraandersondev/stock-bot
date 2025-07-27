@@ -9,10 +9,12 @@ import { MarketData } from './MarketData';
 import { TradingAdvice } from './TradingAdvice';
 import { KnowledgeSearch } from './KnowledgeSearch';
 import { Header } from './Header';
+import BacktestResults from './BacktestResults';
 import { useSymbolExtraction } from '@/hooks/useSymbolExtraction';
 import { fetchFullStockData as fetchStockData } from '@/services/stockApi';
 import { analyzePatterns, generateTradingRecommendation } from '@/services/patternAnalysis';
 import { analyzeChartImage, preloadModels } from '@/services/computerVision';
+import { runBacktest, BacktestResult } from '@/services/backtestingService';
 import { useToast } from '@/hooks/use-toast';
 
 export const TradingDashboard = () => {
@@ -20,6 +22,8 @@ export const TradingDashboard = () => {
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [manualSymbol, setManualSymbol] = useState('');
+  const [backtestResults, setBacktestResults] = useState<BacktestResult | null>(null);
+  const [isBacktesting, setIsBacktesting] = useState(false);
   const [cvPatterns, setCvPatterns] = useState<any[]>([]);
   
   const { extractedSymbol, extractSymbolFromFile, setSymbol } = useSymbolExtraction();
@@ -120,6 +124,36 @@ export const TradingDashboard = () => {
     await performAnalysis(manualSymbol.toUpperCase());
   };
 
+  const handleRunBacktest = async () => {
+    if (!analysisResults?.marketData?.symbol) {
+      toast({
+        title: "No Symbol Selected",
+        description: "Please analyze a stock first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsBacktesting(true);
+    try {
+      const results = await runBacktest(analysisResults.marketData.symbol);
+      setBacktestResults(results);
+      toast({
+        title: "Backtest Complete",
+        description: `Analyzed ${results.totalTrades} trades with ${(results.winRate * 100).toFixed(1)}% win rate`,
+      });
+    } catch (error) {
+      console.error('Backtest error:', error);
+      toast({
+        title: "Backtest Failed",
+        description: "Unable to run backtest analysis",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBacktesting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -189,6 +223,15 @@ export const TradingDashboard = () => {
             <TradingAdvice 
               recommendation={analysisResults?.recommendation}
               isAnalyzing={isAnalyzing}
+            />
+          </Card>
+
+          {/* Backtesting Results Section */}
+          <Card className="p-6">
+            <BacktestResults
+              results={backtestResults}
+              isLoading={isBacktesting}
+              onRunBacktest={handleRunBacktest}
             />
           </Card>
         </div>
