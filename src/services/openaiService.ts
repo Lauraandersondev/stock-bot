@@ -105,14 +105,18 @@ ${ragContext}
 Provide a trading recommendation with specific entry, stop loss, and target levels.`;
 
     try {
+      console.log('Calling OpenAI API with data:', { symbol: stockData.quote.symbol, patterns: patterns.length });
       const response = await this.callOpenAI([
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ]);
 
+      console.log('OpenAI raw response:', response);
+
       // Try to parse JSON response
       try {
         const parsed = JSON.parse(response);
+        console.log('Parsed OpenAI response:', parsed);
         return {
           action: parsed.action,
           confidence: parsed.confidence,
@@ -123,6 +127,8 @@ Provide a trading recommendation with specific entry, stop loss, and target leve
       } catch (parseError) {
         // Fallback if response isn't valid JSON
         console.warn('Failed to parse OpenAI JSON response, using fallback');
+        console.log('Parse error:', parseError);
+        console.log('Response that failed to parse:', response);
         return this.parseFallbackResponse(response, stockData);
       }
     } catch (error) {

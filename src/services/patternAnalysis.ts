@@ -110,12 +110,19 @@ export const generateTradingRecommendation = async (
 ): Promise<TradingRecommendation> => {
   try {
     // Get contextual knowledge from RAG system
-    const patternNames = patterns.map(p => p.name).join(' ');
-    const ragContext = await ragService.generateContextualAdvice(
-      patterns, 
-      stockData, 
-      `${patternNames} options trading strategy analysis`
-    );
+    let ragContext = '';
+    try {
+      const patternNames = patterns.map(p => p.name).join(' ');
+      ragContext = await ragService.generateContextualAdvice(
+        patterns, 
+        stockData, 
+        `${patternNames} options trading strategy analysis`
+      );
+      console.log('RAG context generated successfully');
+    } catch (ragError) {
+      console.warn('RAG service failed, proceeding without context:', ragError);
+      ragContext = 'Technical analysis based on detected patterns and indicators.';
+    }
     
     // Try OpenAI for enhanced analysis first
     try {
@@ -125,6 +132,8 @@ export const generateTradingRecommendation = async (
         patterns,
         ragContext
       );
+      
+      console.log('OpenAI recommendation received:', aiRecommendation);
       
       return {
         ...aiRecommendation,
