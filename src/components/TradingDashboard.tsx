@@ -46,7 +46,7 @@ export const TradingDashboard = () => {
       const allPatterns = imagePatterns ? [...imagePatterns, ...dataPatterns] : dataPatterns;
       
       // Generate trading recommendation
-      const recommendation = generateTradingRecommendation(stockData, allPatterns);
+      const recommendation = await generateTradingRecommendation(stockData, allPatterns);
       
       setAnalysisResults({
         detectedPatterns: allPatterns,

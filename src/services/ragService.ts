@@ -1,4 +1,4 @@
-import { pipeline } from '@xenova/transformers';
+import { pipeline } from '@huggingface/transformers';
 import { TRADING_KNOWLEDGE_BASE, TradingDocument } from '@/data/tradingKnowledgeBase';
 
 interface EmbeddingCache {
@@ -24,7 +24,8 @@ class RAGService {
       
       this.embedder = await pipeline(
         'feature-extraction',
-        'Xenova/all-MiniLM-L6-v2'
+        'mixedbread-ai/mxbai-embed-xsmall-v1',
+        { device: 'webgpu' }
       );
 
       // Pre-compute embeddings for all documents
