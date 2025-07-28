@@ -106,17 +106,19 @@ export const analyzePatterns = (stockData: StockData): DetectedPattern[] => {
 // Generate AI-enhanced trading recommendation
 export const generateTradingRecommendation = async (
   stockData: StockData, 
-  patterns: DetectedPattern[]
+  patterns: DetectedPattern[],
+  userQuestion?: string
 ): Promise<TradingRecommendation> => {
   try {
     // Get contextual knowledge from RAG system
     let ragContext = '';
     try {
       const patternNames = patterns.map(p => p.name).join(' ');
+      const searchQuery = userQuestion ? `${userQuestion} trading analysis` : `${patternNames} options trading strategy analysis`;
       ragContext = await ragService.generateContextualAdvice(
         patterns, 
         stockData, 
-        `${patternNames} options trading strategy analysis`
+        searchQuery
       );
       console.log('RAG context generated successfully');
     } catch (ragError) {
@@ -130,7 +132,8 @@ export const generateTradingRecommendation = async (
       const aiRecommendation = await openaiService.generateTradingAdvice(
         stockData,
         patterns,
-        ragContext
+        ragContext,
+        userQuestion
       );
       
       console.log('OpenAI recommendation received:', aiRecommendation);

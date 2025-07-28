@@ -34,7 +34,7 @@ export const TradingDashboard = () => {
     preloadModels();
   });
 
-  const performAnalysis = async (symbol: string, imagePatterns?: any[]) => {
+  const performAnalysis = async (symbol: string, imagePatterns?: any[], userQuestion?: string) => {
     try {
       setIsAnalyzing(true);
       
@@ -46,7 +46,7 @@ export const TradingDashboard = () => {
       const allPatterns = imagePatterns ? [...imagePatterns, ...dataPatterns] : dataPatterns;
       
       // Generate trading recommendation
-      const recommendation = await generateTradingRecommendation(stockData, allPatterns);
+      const recommendation = await generateTradingRecommendation(stockData, allPatterns, userQuestion);
       
       setAnalysisResults({
         detectedPatterns: allPatterns,
@@ -78,7 +78,7 @@ export const TradingDashboard = () => {
     }
   };
 
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = async (file: File, question?: string) => {
     setUploadedImage(file);
     
     try {
@@ -97,7 +97,7 @@ export const TradingDashboard = () => {
       const symbol = extractSymbolFromFile(file);
       
       // Step 3: Perform complete analysis
-      await performAnalysis(symbol, detectedPatterns);
+      await performAnalysis(symbol, detectedPatterns, question);
       
     } catch (error) {
       console.error('Image analysis error:', error);

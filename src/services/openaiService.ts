@@ -51,7 +51,8 @@ export class OpenAIService {
   async generateTradingAdvice(
     stockData: any,
     patterns: any[],
-    ragContext: string
+    ragContext: string,
+    userQuestion?: string
   ): Promise<{
     action: 'BUY' | 'SELL' | 'HOLD';
     confidence: 'HIGH' | 'MEDIUM' | 'LOW';
@@ -101,6 +102,7 @@ ${patterns.map(p => `- ${p.name} (${p.type}, confidence: ${p.confidence.toFixed(
 
 TRADING KNOWLEDGE CONTEXT:
 ${ragContext}
+${userQuestion ? `\n\nSPECIFIC USER QUESTION:\n"${userQuestion}"\nPlease address this question directly in your reasoning.` : ''}
 
 Provide a trading recommendation with specific entry, stop loss, and target levels.`;
 
