@@ -17,7 +17,7 @@ interface OpenAIResponse {
 
 export class OpenAIService {
   private async callOpenAI(messages: OpenAIMessage[]): Promise<string> {
-    if (!OPENAI_API_KEY || OPENAI_API_KEY === "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") {
+    if (!OPENAI_API_KEY || OPENAI_API_KEY.length < 20) {
       throw new Error("OpenAI API key not configured");
     }
 
