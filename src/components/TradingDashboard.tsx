@@ -240,14 +240,6 @@ export const TradingDashboard = () => {
         <Card className="mt-6 p-6">
           <KnowledgeSearch />
         </Card>
-        
-        {/* Disclaimer */}
-        <Card className="mt-8 p-4 bg-warning/10 border-warning">
-          <p className="text-sm text-warning-foreground">
-            <strong>Disclaimer:</strong> This analysis is for educational purposes only and should not be considered as financial advice. 
-            Trading involves substantial risk and may result in loss of capital. Always conduct your own research and consult with a qualified financial advisor.
-          </p>
-        </Card>
       </main>
     </div>
   );

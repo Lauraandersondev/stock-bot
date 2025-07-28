@@ -125,7 +125,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
       <div className="space-y-2">
         <Label htmlFor="question" className="text-sm font-medium text-foreground flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
-          Ask a specific question (optional)
+          Ask a specific question
         </Label>
         <Input
           id="question"
