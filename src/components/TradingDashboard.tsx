@@ -81,7 +81,9 @@ export const TradingDashboard = () => {
   const handleImageUpload = async (file: File) => {
     setUploadedImage(file);
     // Extract symbol when image is uploaded but don't analyze yet
-    extractSymbolFromFile(file);
+    const detectedSymbol = extractSymbolFromFile(file);
+    console.log('Extracted symbol from file:', detectedSymbol, 'File name:', file.name);
+    setSymbol(detectedSymbol);
   };
 
   const handleImageAnalyze = async (file: File, question?: string) => {
@@ -97,11 +99,11 @@ export const TradingDashboard = () => {
       const detectedPatterns = await analyzeChartImage(file);
       setCvPatterns(detectedPatterns);
       
-      // Step 2: Extract symbol and get market data
-      const symbol = extractSymbolFromFile(file);
+      // Step 2: Use the extracted symbol from upload
+      console.log('Using extracted symbol for analysis:', extractedSymbol);
       
       // Step 3: Perform complete analysis
-      await performAnalysis(symbol, detectedPatterns, question);
+      await performAnalysis(extractedSymbol, detectedPatterns, question);
       
     } catch (error) {
       console.error('Image analysis error:', error);

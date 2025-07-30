@@ -6,10 +6,11 @@ export const useSymbolExtraction = () => {
 
   const extractSymbolFromFile = (file: File): string => {
     const filename = file.name.toLowerCase();
+    console.log('Extracting symbol from filename:', filename);
     
     // Common stock symbols to look for in filename
     const commonSymbols = [
-      'aapl', 'msft', 'googl', 'amzn', 'tsla', 'nvda', 'meta', 'nflx', 
+      'nflx', 'aapl', 'msft', 'googl', 'amzn', 'tsla', 'nvda', 'meta',
       'spy', 'qqq', 'iwm', 'dia', 'vti', 'voo', 'ber', 'gld', 'slv',
       'netflix', 'apple', 'microsoft', 'google', 'amazon', 'tesla'
     ];
@@ -27,6 +28,7 @@ export const useSymbolExtraction = () => {
           'tesla': 'TSLA'
         };
         const extractedSymbol = symbolMap[symbol] || symbol.toUpperCase();
+        console.log('Found symbol in filename:', symbol, '-> mapped to:', extractedSymbol);
         setExtractedSymbol(extractedSymbol);
         return extractedSymbol;
       }
@@ -36,11 +38,13 @@ export const useSymbolExtraction = () => {
     const symbolMatch = filename.match(/([a-z]{1,5})(?:_chart|_candlestick|chart|\.)/i);
     if (symbolMatch && symbolMatch[1].length <= 5) {
       const symbol = symbolMatch[1].toUpperCase();
+      console.log('Extracted symbol from pattern:', symbol);
       setExtractedSymbol(symbol);
       return symbol;
     }
     
     // Default to AAPL for demo
+    console.log('No symbol found, defaulting to AAPL');
     setExtractedSymbol('AAPL');
     return 'AAPL';
   };
