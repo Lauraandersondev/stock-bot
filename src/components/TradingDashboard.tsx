@@ -78,9 +78,13 @@ export const TradingDashboard = () => {
     }
   };
 
-  const handleImageUpload = async (file: File, question?: string) => {
+  const handleImageUpload = async (file: File) => {
     setUploadedImage(file);
-    
+    // Extract symbol when image is uploaded but don't analyze yet
+    extractSymbolFromFile(file);
+  };
+
+  const handleImageAnalyze = async (file: File, question?: string) => {
     try {
       setIsAnalyzing(true);
       
@@ -167,6 +171,7 @@ export const TradingDashboard = () => {
             </h2>
             <ImageUploadZone 
               onImageUpload={handleImageUpload}
+              onAnalyze={handleImageAnalyze}
               uploadedImage={uploadedImage}
               isAnalyzing={isAnalyzing}
             />

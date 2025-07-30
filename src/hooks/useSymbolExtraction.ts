@@ -10,14 +10,25 @@ export const useSymbolExtraction = () => {
     // Common stock symbols to look for in filename
     const commonSymbols = [
       'aapl', 'msft', 'googl', 'amzn', 'tsla', 'nvda', 'meta', 'nflx', 
-      'spy', 'qqq', 'iwm', 'dia', 'vti', 'voo', 'ber', 'gld', 'slv'
+      'spy', 'qqq', 'iwm', 'dia', 'vti', 'voo', 'ber', 'gld', 'slv',
+      'netflix', 'apple', 'microsoft', 'google', 'amazon', 'tesla'
     ];
     
     // Try to find symbol in filename
     for (const symbol of commonSymbols) {
       if (filename.includes(symbol)) {
-        setExtractedSymbol(symbol.toUpperCase());
-        return symbol.toUpperCase();
+        // Map company names to symbols
+        const symbolMap: { [key: string]: string } = {
+          'netflix': 'NFLX',
+          'apple': 'AAPL',
+          'microsoft': 'MSFT',
+          'google': 'GOOGL',
+          'amazon': 'AMZN',
+          'tesla': 'TSLA'
+        };
+        const extractedSymbol = symbolMap[symbol] || symbol.toUpperCase();
+        setExtractedSymbol(extractedSymbol);
+        return extractedSymbol;
       }
     }
     

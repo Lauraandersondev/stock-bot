@@ -8,13 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 interface ImageUploadZoneProps {
-  onImageUpload: (file: File, question?: string) => void;
+  onImageUpload: (file: File) => void;
+  onAnalyze: (file: File, question?: string) => void;
   uploadedImage: File | null;
   isAnalyzing: boolean;
 }
 
 export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
   onImageUpload,
+  onAnalyze,
   uploadedImage,
   isAnalyzing
 }) => {
@@ -31,12 +33,24 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
         setUploadProgress(prev => {
           if (prev >= 100) {
             clearInterval(interval);
-            onImageUpload(file, question.trim() || undefined);
+            onImageUpload(file); // Just upload, don't analyze yet
             return 100;
           }
           return prev + 10;
         });
       }, 100);
+    }
+  };
+
+  const handleAnalyze = () => {
+    if (uploadedImage) {
+      onAnalyze(uploadedImage, question.trim() || undefined);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && uploadedImage && !isAnalyzing) {
+      handleAnalyze();
     }
   };
 
@@ -77,10 +91,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
               </p>
             </div>
             <Button
-              onClick={() => {
-                setUploadProgress(0);
-                onImageUpload(uploadedImage, question.trim() || undefined);
-              }}
+              onClick={handleAnalyze}
               className="w-full"
               disabled={isAnalyzing}
             >
@@ -90,7 +101,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                   Analyzing...
                 </>
               ) : (
-                'Analyze Again'
+                'Analyze Chart'
               )}
             </Button>
           </div>
@@ -132,11 +143,17 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
           placeholder="e.g., Should I buy or sell? What's the trend?"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
+          onKeyPress={handleKeyPress}
           disabled={isAnalyzing}
         />
         <p className="text-xs text-muted-foreground">
-          Add a specific question to get targeted advice about this chart.
+          Add a specific question to get targeted advice about this chart. Press Enter to analyze.
         </p>
+        {uploadedImage && uploadProgress === 100 && !isAnalyzing && (
+          <Button onClick={handleAnalyze} className="w-full mt-2">
+            Analyze Chart
+          </Button>
+        )}
       </div>
     </div>
   );
