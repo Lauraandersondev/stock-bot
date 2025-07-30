@@ -80,9 +80,8 @@ export const TradingDashboard = () => {
 
   const handleImageUpload = async (file: File) => {
     setUploadedImage(file);
-    // Extract symbol when image is uploaded but don't analyze yet
-    const detectedSymbol = extractSymbolFromFile(file);
-    console.log('Extracted symbol from file:', detectedSymbol, 'File name:', file.name);
+    const detectedSymbol = await extractSymbolFromFile(file); // now async
+    console.log('Extracted symbol from file:', detectedSymbol);
     setSymbol(detectedSymbol);
   };
 
